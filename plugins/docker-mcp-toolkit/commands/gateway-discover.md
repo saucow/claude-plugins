@@ -1,5 +1,5 @@
 ---
-description: Discover relevant MCP servers for your current project - 650
+description: Discover relevant MCP servers for your current project - 900 
 argument-hint: "[project-path]"
 allowed-tools: ["Task", "Read", "Glob"]
 ---
@@ -88,7 +88,7 @@ Your choice:
 ```
 
 Based on selection:
-- Option 1: Agent enables all recommended servers using mcp-add
+- Option 1: Agent enables all recommended servers using docker mcp server enable
 - Option 2: Show list, user selects, agent enables selected
 - Option 3: Exit
 
