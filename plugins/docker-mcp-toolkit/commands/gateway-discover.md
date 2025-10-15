@@ -41,35 +41,54 @@ Analyzing to find relevant MCP servers...
 
 ---
 
-## Launch Agent
+## Launch Agents in Parallel
 
-Launch the mcp-discover agent to analyze the project:
+Launch 3 specialized agents simultaneously for faster results:
 
 ```
-Use Task tool to launch: mcp-discover
+Use Task tool to launch ALL 3 agents in parallel:
 
-Agent will:
-1. Read project files (README, manifests, configs)
-2. Extract technologies from files
-3. Use mcp-find to search catalog
-4. Filter and rank by project fit
-5. Return recommendations with file evidence
+1. mcp-discover-packages
+   → Analyzes package.json dependencies
+   → Calls mcp-find for each package
 
-Wait for agent to complete (15-25 seconds)...
+2. mcp-discover-readme
+   → Analyzes README.md service mentions
+   → Calls mcp-find for each mention
+
+3. mcp-discover-defaults
+   → Determines always-suggest servers
+   → github-official (if .git), playwright (if web app), context7 (always)
+
+All run simultaneously → faster results (~10-15 seconds)
 ```
+
+Wait for all 3 agents to complete...
 
 ---
 
-## Receive Agent Data
+## Merge Agent Results
 
-Agent returns structured data (not formatted text).
+Receive data from all 3 agents:
 
-Expected data structure:
-- FILES_READ: [...]
-- PROJECT_SUMMARY: "..."
-- SEARCHES_EXECUTED: [{query, matches, servers}, ...]
-- RECOMMENDED_SERVERS: [{name, found_in, description, secrets, oauth}, ...]
-- SUGGESTED_SERVERS: [{name, reason, description, secrets, oauth}, ...]
+**packages_agent.matched_servers**: Servers matching package.json dependencies
+**readme_agent.matched_servers**: Servers from README mentions
+**defaults_agent.default_servers**: Always-suggest servers
+
+**Combine**:
+```
+all_servers = []
+
+Add all from packages_agent.matched_servers → Recommended
+Add all from readme_agent.matched_servers → Recommended
+Add all from defaults_agent.default_servers:
+  - github-official → Recommended (if returned)
+  - playwright, context7 → Suggested
+
+Deduplicate by server name
+```
+
+**Result**: Combined list of recommended + suggested servers
 
 ---
 
@@ -145,9 +164,27 @@ Based on selection:
 
 ## Enable Servers
 
-If user approved, tell agent which servers to enable.
+If user approved, enable each selected server using Bash (command has Bash access, agents don't):
+We must use: `docker mcp server enable` we should NOT use mcp-add due to tool issues
 
-Agent will use `docker mcp server enable <server-name>` for each server and report progress.
+```bash
+For each selected server:
+  docker mcp server enable <server-name>
+
+Example:
+  docker mcp server enable neon
+  docker mcp server enable redis
+  docker mcp server enable playwright
+  docker mcp server enable github-official
+```
+
+Show progress as each completes:
+```
+Enabling neon... ✓
+Enabling redis... ✓
+Enabling playwright... ✓
+Enabling github-official... ✓
+```
 
 ---
 
