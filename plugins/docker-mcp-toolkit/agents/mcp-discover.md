@@ -63,73 +63,79 @@ No matches:
 
 **If `total_matches` = 0 or `servers` = null** → Skip this search, don't recommend anything from it.
 
+**If mcp-find returns multiple servers for one search** → Include ALL of them!
+
+Example:
+```
+mcp-find("neon") returns:
+  {"servers": [{"name": "neon"}, {"name": "neon-remote"}], "total_matches": 2}
+
+→ Include BOTH neon and neon-remote in results
+→ They are distinct servers with different capabilities (local vs remote)
+```
+
+**Do NOT pick just one** - show all servers that mcp-find returned!
+
 **Always search**:
 - mcp-find(query="context7") - Documentation (for all projects)
 - mcp-find(query="playwright") - Browser automation (if web framework detected)
 
 ---
 
-### Step 4: Present Results
+### Step 4: Return Data to Command
 
-**Show in output**:
+**Return structured data** (command will format for user):
 
-```markdown
-## Files Analyzed
-- ✓ [files you actually read]
+```
+Return this information:
 
-## Searches Executed
+FILES_READ:
+- package.json
+- README.md
+- [any others you actually read]
 
-mcp-find calls:
-1. neon → 2 matches (neon, neon-remote)
-2. next → X matches
-3. vercel → Y matches
-[list ALL searches with match counts]
+PROJECT_SUMMARY:
+[1-2 sentence description based on what you read]
 
----
+SEARCHES_EXECUTED:
+- neon → 2 matches (neon, neon-remote)
+- next → X matches (server names)
+- vercel → Y matches (server names)
+[all mcp-find calls with results]
 
-## Project Summary
-[1-2 sentences based on files]
+RECOMMENDED_SERVERS:
+Include ALL servers from mcp-find that match package.json/README dependencies:
 
----
+If mcp-find("neon") returned 2 servers (neon, neon-remote):
+- name: neon
+  found_in: package.json dependency @neondatabase/serverless
+  description: MCP server for Neon Management API and databases
+  required_secrets: [neon.api_key]
+  oauth_required: false
 
-⭐️ Recommended
+- name: neon-remote
+  found_in: package.json dependency @neondatabase/serverless (same source)
+  description: Deploy and scale serverless PostgreSQL databases
+  required_secrets: []
+  oauth_required: true
 
-• [server-name]
-  - Found in: [which file - be specific]
-  - Capabilities: [what it does]
-  - Setup: [requirements or "OAuth - Run: docker mcp oauth authorize <name>"]
+Include BOTH - they are distinct servers with different features!
 
-💡 Suggested
+SUGGESTED_SERVERS:
+For each server to suggest:
+- name: playwright
+- reason: Web framework detected (Next.js)
+- description: Browser automation, testing
+- required_secrets: []
+- oauth_required: false
 
-• [server-name]
-  - Found in: [which file]
-  - Capabilities: [what it does]
-  - Setup: [requirements]
+IMPORTANT:
+- ONLY include servers that mcp-find returned (total_matches > 0)
+- Always include: context7, playwright (if web app), github-official (if .git)
+- Show which file/search led to each server
 ```
 
-**Rules**:
-- ONLY recommend servers that mcp-find returned (check `total_matches` > 0)
-- Show file evidence for each recommendation
-- If web framework → include playwright
-- Always include context7
-- If .git exists → include github-official
-
----
-
-### Step 5: Enable Servers
-
-If user approves, run:
-```bash
-docker mcp server enable <server-name>
-```
-
-Then show:
-```
-✓ Enabled X servers
-
-⚠️ Restart Claude Code to activate
-   Exit and restart: claude
-```
+**Do NOT format with emojis or user-facing presentation - just return the data!**
 
 ---
 
@@ -167,16 +173,19 @@ Deploy on Vercel
 - mcp-find("playwright") → results...
 - mcp-find("context7") → results...
 
-**Output**:
+**Return Data**:
 
-⭐️ Recommended:
-- neon (from package.json @neondatabase/serverless)
-- vercel (from README "Deploy on Vercel")
-- github-official (from .git directory)
+RECOMMENDED_SERVERS:
+- neon (from package.json)
+- neon-remote (from package.json - remote variant)
+- vercel (from README)
+- github-official (from .git)
 
-💡 Suggested:
-- playwright (web framework detected)
+SUGGESTED_SERVERS:
+- playwright (web framework)
 - context7 (all projects)
+
+Note: Both neon and neon-remote included - they're distinct servers!
 
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: Discover relevant MCP servers for your current project - 3
+description: Discover relevant MCP servers for your current project - 5
 argument-hint: "[project-path]"
 allowed-tools: ["Task", "Read", "Glob", Bash(docker mcp:*)]
 ---
@@ -60,15 +60,66 @@ Wait for agent to complete (15-25 seconds)...
 
 ---
 
-## Present Recommendations
+## Receive Agent Data
 
-Agent returns recommendations. Display them to the user in a clear format.
+Agent returns structured data (not formatted text).
 
-Expected structure:
-- Files analyzed list
-- Project summary
-- Recommended servers (with file evidence)
-- Suggested servers (with file evidence)
+Expected data structure:
+- FILES_READ: [...]
+- PROJECT_SUMMARY: "..."
+- SEARCHES_EXECUTED: [{query, matches, servers}, ...]
+- RECOMMENDED_SERVERS: [{name, found_in, description, secrets, oauth}, ...]
+- SUGGESTED_SERVERS: [{name, reason, description, secrets, oauth}, ...]
+
+---
+
+## Format and Present
+
+Transform agent data into user-friendly output:
+
+```
+┌─────────────────────────────────────────────────────┐
+│ MCP Server Discovery Results                       │
+└─────────────────────────────────────────────────────┘
+
+Files Analyzed:
+{for each file in FILES_READ}
+- ✓ {file}
+
+Searches Executed:
+{for each search in SEARCHES_EXECUTED}
+- {query} → {matches} matches {if matches > 0: list server names}
+
+Project Summary:
+{PROJECT_SUMMARY}
+
+---
+
+⭐️ Recommended
+
+{for each server in RECOMMENDED_SERVERS}
+• {name}
+  - Found in: {found_in}
+  - Capabilities: {description}
+  - Setup: {if oauth: "OAuth - Run: docker mcp oauth authorize {name}"}
+          {else if secrets: "Requires: {join(secrets, ', ')}"}
+          {else: "No setup needed"}
+
+💡 Suggested
+
+{for each server in SUGGESTED_SERVERS}
+• {name}
+  - Why: {reason}
+  - Capabilities: {description}
+  - Setup: {same logic as above}
+
+---
+
+Summary:
+- Files read: {count FILES_READ}
+- Searches performed: {count SEARCHES_EXECUTED}
+- Servers found: {count RECOMMENDED + SUGGESTED}
+```
 
 ---
 
@@ -78,16 +129,16 @@ Ask user:
 ```
 What would you like to do?
 
-1. Enable recommended servers
-2. Select specific servers
+1. Enable all recommended servers
+2. Enable specific servers
 3. Exit
 
 Your choice:
 ```
 
 Based on selection:
-- Option 1: Agent enables all recommended servers using docker mcp server enable
-- Option 2: Show list, user selects, agent enables selected
+- Option 1: Enable all from RECOMMENDED_SERVERS
+- Option 2: Show numbered list, user selects, enable selected
 - Option 3: Exit
 
 ---
