@@ -1,7 +1,7 @@
 ---
-description: Discover relevant MCP servers for your current project - 900 
+description: Discover relevant MCP servers for your current project - 3
 argument-hint: "[project-path]"
-allowed-tools: ["Task", "Read", "Glob"]
+allowed-tools: ["Task", "Read", "Glob", Bash(docker mcp:*)]
 ---
 
 # Discover Relevant MCP Servers
@@ -16,12 +16,10 @@ Check if mcp-find tool is available (indicates dynamic-tools feature is enabled)
 
 If NOT available:
 ```
-⚠️ This command works best with dynamic-tools enabled.
+⚠️ This command requires dynamic-tools enabled.
 
 Enable it: docker mcp feature enable dynamic-tools
 Then restart Claude Code.
-
-Continue with bash fallback? [y/n]
 ```
 
 ---
